@@ -109,6 +109,9 @@ services:
      SPRING_MONGO_DB_NAME: ${SPATIAL_MONGO_DB_NAME}
    networks:
      - geonames
+   depends_on:
+     - postgres
+     - mongodb
    restart: always     
    
 networks:
