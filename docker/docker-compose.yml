@@ -35,6 +35,8 @@ services:
      - '${GEOSERVER_EXTENSIONS}:/opt/additional_libs'
    networks:
      - geonames
+   depends_on:
+     - mongodb
    restart: always
  
  api-gateway:
@@ -112,8 +114,20 @@ services:
    depends_on:
      - postgres
      - mongodb
-   restart: always     
-   
+   restart: always
+
+ geonames-front:
+   image: enjoybymap/geonames-front:1.0.0
+   container_name: geonames-front
+   ports:
+     - "3000:3000"
+   networks:
+     - geonames
+   depends_on:
+     - geoserver
+     - api-gateway
+   restart: always
+
 networks:
   geonames:
     driver: bridge
