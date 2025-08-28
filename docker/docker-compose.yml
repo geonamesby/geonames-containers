@@ -10,7 +10,7 @@ services:
      POSTGRES_TIMEZONE: Europe/Minsk
      POSTGRES_LOG_TIMEZONE: Europe/Minsk
    ports:
-     - '5432:5432'
+     - '5432'
    volumes:
      - '${POSTGRES_DATA}:/var/lib/postgresql/data'
    networks:
@@ -43,7 +43,7 @@ services:
    image: enjoybymap/api-gateway:1.0.0
    container_name: api-gateway
    ports:
-     - "127.0.0.1:8080:8080"
+     - "8085:8080"
    environment:
       SPRING_PROFILES_ACTIVE: deploy
       GEOSERVER_HOST: ${GEOSERVER_HOST} 
