@@ -1,132 +1,133 @@
 version: "3.8"
 
 services:
- postgres:
-   image: postgis/postgis:16-3.4
-   container_name: postgis
-   environment:
-     POSTGRES_USER: ${POSTGRES_USER}
-     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-     POSTGRES_TIMEZONE: Europe/Minsk
-     POSTGRES_LOG_TIMEZONE: Europe/Minsk
-   ports:
-     - '5432'
-   volumes:
-     - '${POSTGRES_DATA}:/var/lib/postgresql/data'
-   networks:
-     - geonames
-   restart: always
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: postgis
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_TIMEZONE: Europe/Minsk
+      POSTGRES_LOG_TIMEZONE: Europe/Minsk
+    ports:
+      - '5432'
+    volumes:
+      - '${POSTGRES_DATA}:/var/lib/postgresql/data'
+    networks:
+      - geonames
+    restart: always
 
- geoserver:
-   image: docker.osgeo.org/geoserver:2.24.x
-   container_name: geoserver
-   ports:
-     - "127.0.0.1:8092:8080"
-   environment:
-     INSTALL_EXTENSIONS: "true"
-     STABLE_EXTENSIONS: "ysld,h2,mongodb,vectortiles"
-     COMMUNITY_EXTENSIONS: "ogcapi-features,ogcapi-images,ogcapi-maps,ogcapi-styles,ogcapi-tiles,sec-keycloak,sec-oauth2-openid-connect,spatialjson,mongodb-schemaless"
-     CORS_ENABLED: true
-     CORS_ALLOWED_ORIGINS: ${CLIENT_ORIGIN_HOST}
-     CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,HEAD,OPTIONS
-     CORS_ALLOWED_HEADERS: Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers
-   volumes:
-     - '${GEOSERVER_DATA}:/opt/geoserver_data'
-     - '${GEOSERVER_EXTENSIONS}:/opt/additional_libs'
-   networks:
-     - geonames
-   depends_on:
-     - mongodb
-   restart: always
- 
- api-gateway:
-   image: enjoybymap/api-gateway:1.0.0
-   container_name: api-gateway
-   ports:
-     - "8085:8080"
-   environment:
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.24.x
+    container_name: geoserver
+    ports:
+      - "8092:8080"
+    environment:
+      INSTALL_EXTENSIONS: "true"
+      STABLE_EXTENSIONS: "ysld,h2,mongodb,vectortiles"
+      COMMUNITY_EXTENSIONS: "ogcapi-features,ogcapi-images,ogcapi-maps,ogcapi-styles,ogcapi-tiles,sec-keycloak,sec-oauth2-openid-connect,spatialjson,mongodb-schemaless"
+      CORS_ENABLED: true
+      CORS_ALLOWED_ORIGINS: ${CLIENT_ORIGIN_HOST}
+      CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,HEAD,OPTIONS
+      CORS_ALLOWED_HEADERS: Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers
+    volumes:
+      - '${GEOSERVER_DATA}:/opt/geoserver_data'
+      - '${GEOSERVER_EXTENSIONS}:/opt/additional_libs'
+    networks:
+      - geonames
+    depends_on:
+      - mongodb
+    restart: always
+
+  api-gateway:
+    image: enjoybymap/api-gateway:1.0.0
+    container_name: api-gateway
+    ports:
+      - "8085:8080"
+    environment:
       SPRING_PROFILES_ACTIVE: deploy
-      GEOSERVER_HOST: ${GEOSERVER_HOST} 
+      GEOSERVER_HOST: ${GEOSERVER_HOST}
       MICROSERVICE_SPATIAL_HOST: ${MICROSERVICE_SPATIAL_HOST}
       CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOW_ORIGINS}
       CORS_ALLOWED_METHODS: ${GATEWAY_CORS_ALLOW_METHODS}
       CORS_ALLOWED_HEADERS: ${GATEWAY_CORS_ALLOW_HEADERS}
       CORS_ALLOWED_CREDENTIALS: ${GATEWAY_CORS_ALLOW_CREDENTIALS}
       LOGGING_LEVEL_ROOT: INFO
-   volumes:
-     - '${GATEWAY_DATA}/logs:/app/logs'
-   networks:
-     - geonames
-   restart: always
-  
- mongodb:
-   image: mongo:6.0  
-   container_name: mongodb  
-   ports:
-     - "27017:27017"
-   environment:
-     MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-     MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-   volumes:
-     - '${MONGO_DATA}:/data/db'
-   networks:
-     - geonames
-   restart: always
-   
- mongo-express:
-   image: mongo-express
-   container_name: mongo_express
-   ports:
-     - "8093:8081"
-   environment:
-     - ME_CONFIG_MONGODB_SERVER=mongodb
-     - ME_CONFIG_MONGODB_PORT=27017
-     - ME_CONFIG_MONGODB_ADMINUSERNAME=${ME_CONFIG_MONGODB_ADMINUSERNAME}
-     - ME_CONFIG_MONGODB_ADMINPASSWORD=${ME_CONFIG_MONGODB_ADMINPASSWORD} 
-   networks:
-     - geonames
-   depends_on:
-     - mongodb   
-     
- microservice-spatial:
-   image: enjoybymap/spatial-service:1.0.0
-   container_name: microservice-spatial  
-   ports:
-     - "8081" 
-   environment:
-     SERVER_PORT: 8081
-     SPRING_DATASOURCE_URL: ${SPATIAL_DATASOURCE_URL}
-     SPRING_DATASOURCE_USERNAME: ${SPATIAL_DATASOURCE_USERNAME}
-     SPRING_DATASOURCE_PASSWORD: ${SPATIAL_DATASOURCE_PASSWORD}
-     CORS_ALLOWED_ORIGINS: ${SPATIAL_CORS_ALLOW_ORIGINS}
-     CORS_ALLOWED_METHODS: ${SPATIAL_CORS_ALLOW_METHODS}
-     CORS_ALLOWED_HEADERS: ${SPATIAL_CORS_ALLOW_HEADERS}
-     CORS_ALLOWED_CREDENTIALS: ${SPATIAL_CORS_ALLOW_CREDENTIALS}
-     API_GATEWAY_URL: ${API_GATEWAY_URL}
-     LOGGING_LEVEL_ROOT: INFO
-     SPRING_MONGO_USERNAME: ${SPATIAL_MONGO_USERNAME}
-     SPRING_MONGO_PASSWORD: ${SPATIAL_MONGO_PASSWORD}
-     SPRING_MONGO_HOST: ${SPATIAL_MONGO_HOST}
-     SPRING_MONGO_PORT: ${SPATIAL_MONGO_PORT}
-     SPRING_MONGO_DB_NAME: ${SPATIAL_MONGO_DB_NAME}
-   networks:
-     - geonames
-   depends_on:
-     - postgres
-     - mongodb
-   restart: always
+    volumes:
+      - '${GATEWAY_DATA}/logs:/app/logs'
+    networks:
+      - geonames
+    restart: always
 
- geonames-front:
-   image: enjoybymap/geonames-front:1.0.0
-   container_name: geonames-front
-   ports:
-     - "3000:3000"
-   networks:
-     - geonames
-   depends_on:
-     - geoserver
-     - api-gateway
-   restart: always
+  mongodb:
+    image: mongo:4.4.21
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - '${MONGO_DATA}:/data/db'
+    networks:
+      - geonames
+    restart: always
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo_express
+    ports:
+      - "8093:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${ME_CONFIG_MONGODB_ADMINUSERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${ME_CONFIG_MONGODB_ADMINPASSWORD}
+      - ME_CONFIG_SITE_BASEURL=${MONGO_EXPRESS_CONFIG_SITE_BASEURL}
+    networks:
+      - geonames
+    depends_on:
+      - mongodb
+
+  microservice-spatial:
+    image: enjoybymap/spatial-service:1.0.0
+    container_name: microservice-spatial
+    ports:
+      - "8081"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: ${SPATIAL_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPATIAL_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPATIAL_DATASOURCE_PASSWORD}
+      CORS_ALLOWED_ORIGINS: ${SPATIAL_CORS_ALLOW_ORIGINS}
+      CORS_ALLOWED_METHODS: ${SPATIAL_CORS_ALLOW_METHODS}
+      CORS_ALLOWED_HEADERS: ${SPATIAL_CORS_ALLOW_HEADERS}
+      CORS_ALLOWED_CREDENTIALS: ${SPATIAL_CORS_ALLOW_CREDENTIALS}
+      API_GATEWAY_URL: ${API_GATEWAY_URL}
+      LOGGING_LEVEL_ROOT: INFO
+      SPRING_MONGO_USERNAME: ${SPATIAL_MONGO_USERNAME}
+      SPRING_MONGO_PASSWORD: ${SPATIAL_MONGO_PASSWORD}
+      SPRING_MONGO_HOST: ${SPATIAL_MONGO_HOST}
+      SPRING_MONGO_PORT: ${SPATIAL_MONGO_PORT}
+      SPRING_MONGO_DB_NAME: ${SPATIAL_MONGO_DB_NAME}
+    networks:
+      - geonames
+    depends_on:
+      - postgis
+      - mongodb
+    restart: always
+
+  geonames-front:
+    image: enjoybymap/geonames-front:1.0.0
+    container_name: geonames-front
+    ports:
+      - "3000:3000"
+    networks:
+      - geonames
+    depends_on:
+      - geoserver
+      - api-gateway
+    restart: always
 
 networks:
   geonames:
