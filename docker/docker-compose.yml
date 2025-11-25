@@ -132,6 +132,28 @@ services:
       - api-gateway
     restart: always
 
+  microservice-catalog:
+    image: enjoybymap/catalog-service:1.0.0
+    container_name: microservice-catalog
+    ports:
+      - "8082"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: ${CATALOG_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${CATALOG_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${CATALOG_DATASOURCE_PASSWORD}
+      CORS_ALLOWED_ORIGINS: ${CATALOG_CORS_ALLOW_ORIGINS}
+      CORS_ALLOWED_METHODS: ${CATALOG_CORS_ALLOW_METHODS}
+      CORS_ALLOWED_HEADERS: ${CATALOG_CORS_ALLOW_HEADERS}
+      CORS_ALLOWED_CREDENTIALS: ${CATALOG_CORS_ALLOW_CREDENTIALS}
+      API_GATEWAY_URL: ${API_GATEWAY_URL}
+      LOGGING_LEVEL_ROOT: INFO
+    networks:
+      - geonames
+    depends_on:
+      - postgis
+    restart: always
+
 networks:
   geonames:
     driver: bridge
