@@ -211,7 +211,7 @@ services:
       - kafka-1
       - kafka-2
     networks:
-      - kafka-net
+      - geonames
 
 networks:
   geonames:
