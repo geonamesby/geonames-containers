@@ -110,6 +110,7 @@ services:
       SPRING_MONGO_HOST: ${SPATIAL_MONGO_HOST}
       SPRING_MONGO_PORT: ${SPATIAL_MONGO_PORT}
       SPRING_MONGO_DB_NAME: ${SPATIAL_MONGO_DB_NAME}
+      KAFKA_BOOTSTRAP_SERVERS: ${SPATIAL_KAFKA_BOOTSTRAP_SERVERS}
     networks:
       - geonames
     depends_on:
@@ -153,6 +154,64 @@ services:
     depends_on:
       - postgis
     restart: always
+
+  kafka-1:
+    image: confluentinc/cp-kafka:7.8.0
+    container_name: kafka1
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_BROKER_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:9091,2@kafka-2:9091'
+      KAFKA_LISTENERS: 'PLAINTEXT://:9090,CONTROLLER://:9091,EXTERNAL://:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-1:9090,EXTERNAL://${HOSTNAME:-localhost}:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      CLUSTER_ID: 'EmptNWtoR4GGWx-BH6nGLQ'
+    volumes:
+      - ${KAFKA_ONE_DATA}:/var/lib/kafka/data
+    networks:
+      - geonames
+
+  kafka-2:
+    image: confluentinc/cp-kafka:7.8.0
+    container_name: kafka2
+    ports:
+      - "9094:9094"
+      - "9095:9095"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_BROKER_ID: 2
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:9091,2@kafka-2:9091'
+      KAFKA_LISTENERS: 'PLAINTEXT://:9090,CONTROLLER://:9091,EXTERNAL://:9094'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-2:9090,EXTERNAL://${HOSTNAME:-localhost}:9094'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      CLUSTER_ID: 'EmptNWtoR4GGWx-BH6nGLQ'
+    volumes:
+      - ${KAFKA_TWO_DATA}:/var/lib/kafka/data
+    networks:
+      - geonames
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-cluster-ui
+    ports:
+      - "9081:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:9090,kafka-2:9090
+    depends_on:
+      - kafka-1
+      - kafka-2
+    networks:
+      - kafka-net
 
 networks:
   geonames:
